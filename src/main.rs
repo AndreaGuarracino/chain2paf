@@ -52,7 +52,7 @@ fn main() {
     let mut t_end = String::from("");
     let mut q_name = String::from("");
     let mut q_size = String::from("");
-    let mut q_strand= String::from("");
+    let mut q_strand = String::from("");
     let mut q_start = String::from("");
     let mut q_end = String::from("");
     //let id;
@@ -62,7 +62,8 @@ fn main() {
 
     for line in reader.lines() {
         let l = &line.unwrap();
-        let l_vec: Vec<&str> = l.split('\t').collect();
+        let l_tab = l.replace(" ", "\t"); // There are CHAIN files with space-separated fields
+        let l_vec: Vec<&str> = l_tab.split('\t').collect();
 
         if l_vec[0].eq("chain") {
             //eprintln!("{:?}", l_vec);
@@ -73,7 +74,7 @@ fn main() {
                     q_name, q_size, q_start, q_end, q_strand,
                     t_name, t_size, t_start, t_end,
                     num_matches,
-                    cigar
+                    cigar,
                 );
             }
 
@@ -111,9 +112,9 @@ fn main() {
             // size -- the size of the ungapped alignment
             // dt -- the difference between the end of this block and the beginning of the next block (reference sequence)
             // dq -- the difference between the end of this block and the beginning of the next block (query sequence)
-            let size_ungapped_alignment = if !l_vec[0].is_empty() {l_vec[0]} else {"0"};
-            let diff_in_target = if l_vec.len() > 1 {l_vec[1]} else {"0"};
-            let diff_in_query = if l_vec.len() > 2 {l_vec[2]} else {"0"};
+            let size_ungapped_alignment = if !l_vec[0].is_empty() { l_vec[0] } else { "0" };
+            let diff_in_target = if l_vec.len() > 1 { l_vec[1] } else { "0" };
+            let diff_in_query = if l_vec.len() > 2 { l_vec[2] } else { "0" };
 
             if !size_ungapped_alignment.eq("0") {
                 num_matches += size_ungapped_alignment.parse::<u64>().unwrap();
@@ -138,7 +139,7 @@ fn main() {
             q_name, q_size, q_start, q_end, q_strand,
             t_name, t_size, t_start, t_end,
             num_matches,
-            cigar
+            cigar,
         );
     }
 }
