@@ -98,12 +98,11 @@ fn main() {
 
     // Open the input FASTA file
     let path_input_fasta = matches.value_of("FASTA").unwrap_or("");
-    let write_full_cigar = !path_input_fasta.is_empty();
-    let fasta_reader = faidx::Reader::from_path(path_input_fasta).unwrap();
-    //todo to fix
-    // if write_full_cigar {
-    //     fasta_reader = faidx::Reader::from_path(path_input_fasta).unwrap();
-    // }
+    let fasta_reader = if !path_input_fasta.is_empty() {
+        Some(faidx::Reader::from_path(path_input_fasta).unwrap())
+    } else {
+        None
+    };
 
     // Initialize PAF information
     let mut t_name = String::from("");
@@ -173,18 +172,18 @@ fn main() {
             num_matches = 0;
             cigar = String::from("");
 
-            if write_full_cigar {
+            if let Some(reader) = &fasta_reader {
                 //eprintln!("Fetch subquery {} - {}", q_start, q_end);
                 if q_strand == "+" {
                     q_seq = _fetch_subsequence(
-                        &fasta_reader,
+                        &reader,
                         &q_name,
                         q_start,
                         q_end,
                     );
                 } else {
                     q_seq = _fetch_subsequence(
-                        &fasta_reader,
+                        &reader,
                         &q_name,
                         q_size.parse::<usize>().unwrap() - q_end,
                         q_size.parse::<usize>().unwrap() - q_start - 1,
@@ -199,7 +198,7 @@ fn main() {
 
                 //eprintln!("Fetch target {} - {}", t_start, t_end);
                 t_seq = _fetch_subsequence(
-                    &fasta_reader,
+                    &reader,
                     &t_name,
                     t_start,
                     t_end,
@@ -223,7 +222,7 @@ fn main() {
             let diff_in_query = if l_vec.len() > 2 { l_vec[2] } else { "0" };
 
             if !size_ungapped_alignment.eq("0") {
-                if write_full_cigar {
+                if let Some(_reader) = &fasta_reader {
                     let mut last_op = ' ';
                     let mut len_last_op = 0;
 
@@ -286,7 +285,7 @@ fn main() {
                 }
             }
             if !diff_in_target.eq("0") {
-                if write_full_cigar {
+                if let Some(_reader) = &fasta_reader {
                     // Keep the offset updated
                     t_offset += diff_in_target.parse::<usize>().unwrap();
                 }
@@ -295,7 +294,7 @@ fn main() {
                 cigar.push('D');
             }
             if !diff_in_query.eq("0") {
-                if write_full_cigar {
+                if let Some(_reader) = &fasta_reader {
                     // Keep the offset updated
                     q_offset += diff_in_query.parse::<usize>().unwrap();
                 }
