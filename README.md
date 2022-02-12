@@ -13,8 +13,8 @@ cargo install --force --path .
 
 ## usage
 
-With alignments in `aln.chain`, we would convert it into a PAF format file using this call:
+With alignments in `data/hg18ToHg19.over.chain`, we would convert it into a PAF format file using this call:
 
 ```
-chain2paf -i aln.chain > aln.paf
+chain2paf -i data/hg18ToHg19.over.chain > hg18ToHg19.over.chain.paf
 ```
