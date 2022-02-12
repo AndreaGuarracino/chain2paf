@@ -3,7 +3,7 @@ convert CHAIN format to PAF format
 
 ## installation
 
-`paf2chain` is built with rust, and so we install using `cargo`:
+`chain2paf` is built with rust, and so we install using `cargo`:
 
 ```
 https://github.com/AndreaGuarracino/chain2paf
