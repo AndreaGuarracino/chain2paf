@@ -8,3 +8,4 @@ edition = "2021"
 
 [dependencies]
 clap = "2.33.0"
+rust-htslib = "0.38.2"
