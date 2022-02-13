@@ -166,6 +166,12 @@ fn main() {
             q_strand = l_vec[9].to_string();
             q_start = l_vec[10].parse::<usize>().unwrap();
             q_end = l_vec[11].parse::<usize>().unwrap();
+            if q_strand == "-" {
+                let q_size = q_size.parse::<usize>().unwrap();
+                let tmp = q_start;
+                q_start = q_size - q_end;
+                q_end = q_size - tmp;
+            }
             //let id = l_vec[12].clone();
 
             // Initialize PAF fields
