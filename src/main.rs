@@ -25,7 +25,7 @@ fn _emit_paf_row(
 }
 
 pub fn _fetch_subsequence(reader: &faidx::Reader, name: &str, begin: usize, end: usize) -> Vec<u8> {
-    // 0-based
+    // `begin` and `end` are both 0-based (to get the 1-st nucleotide, set `begin = 0` and `end = 0`)
     reader.fetch_seq(name, begin, end).unwrap().to_owned()
 }
 
@@ -173,40 +173,26 @@ fn main() {
             cigar = String::from("");
 
             if let Some(reader) = &fasta_reader {
-                //eprintln!("Fetch subquery {} - {}", q_start, q_end);
-                if q_strand == "+" {
-                    q_seq = _fetch_subsequence(
-                        &reader,
-                        &q_name,
-                        q_start,
-                        q_end,
-                    );
-                } else {
-                    q_seq = _fetch_subsequence(
-                        &reader,
-                        &q_name,
-                        q_size.parse::<usize>().unwrap() - q_end,
-                        q_size.parse::<usize>().unwrap() - q_start - 1,
-                    );
-
+                q_seq = _fetch_subsequence(
+                    &reader,
+                    &q_name,
+                    q_start,
+                    q_end - 1, // -1 because the end is not included in CHAIN/PAF
+                );
+                if q_strand == "-" {
                     q_seq = revcomp(q_seq);
                 }
-                // for x in q_seq.iter() {
-                //     eprint!("{}", *x as char);
-                // }
-                // eprintln!("");
+                // eprintln!("Fetch query {} - {}", q_start, q_end);
+                // for x in q_seq.iter() { eprint!("{}", *x as char); }; eprintln!("");
 
-                //eprintln!("Fetch target {} - {}", t_start, t_end);
                 t_seq = _fetch_subsequence(
                     &reader,
                     &t_name,
                     t_start,
-                    t_end,
+                    t_end - 1,  // -1 because the end is not included in CHAIN/PAF
                 );
-                // for x in t_seq.iter() {
-                //     eprint!("{}", *x as char);
-                // }
-                // eprintln!("");
+                // eprintln!("Fetch target {} - {}", t_start, t_end);
+                // for x in t_seq.iter() { eprint!("{}", *x as char); }; eprintln!("");
 
                 q_offset = 0;
                 t_offset = 0;
@@ -226,16 +212,13 @@ fn main() {
                     let mut last_op = ' ';
                     let mut len_last_op = 0;
 
-                    for _ in 0..size_ungapped_alignment.parse::<u64>().unwrap() {
-                        let q_character = q_seq[q_offset];
-                        let t_character = t_seq[t_offset];
-
+                    let size_ungapped_alignment = size_ungapped_alignment.parse::<usize>().unwrap();
+                    for (q_character, t_character) in q_seq.iter().skip(q_offset).zip(t_seq.iter().skip(t_offset)).take(size_ungapped_alignment) {
+                        // .enumerate() is needed to such a debugging instruction
                         // eprintln!(
                         //     "{} ({} - {}) == {} ({} = {})? {} -- {} {}",
-                        //     q_offset, q_start + q_offset, q_character as char,
-                        //     t_offset, t_start + t_offset, t_character as char,
-                        //     if q_character == t_character { "YES" } else { "NO"},
-                        //     last_op, len_last_op
+                        //     q_offset, q_start + _i, *q_character as char, t_offset, t_start + _i, *t_character as char,
+                        //     if q_character == t_character { "=" } else { "X"}, last_op, len_last_op
                         // );
 
                         if q_character == t_character {
@@ -265,10 +248,10 @@ fn main() {
                             last_op = 'X';
                             len_last_op += 1;
                         }
-
-                        q_offset += 1;
-                        t_offset += 1;
                     }
+
+                    q_offset += size_ungapped_alignment;
+                    t_offset += size_ungapped_alignment;
 
                     if last_op == '=' {
                         num_matches += len_last_op;
