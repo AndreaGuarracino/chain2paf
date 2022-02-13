@@ -284,15 +284,6 @@ fn main() {
                     cigar.push('M');
                 }
             }
-            if !diff_in_target.eq("0") {
-                if let Some(_reader) = &fasta_reader {
-                    // Keep the offset updated
-                    t_offset += diff_in_target.parse::<usize>().unwrap();
-                }
-
-                cigar.push_str(diff_in_target);
-                cigar.push('D');
-            }
             if !diff_in_query.eq("0") {
                 if let Some(_reader) = &fasta_reader {
                     // Keep the offset updated
@@ -301,6 +292,15 @@ fn main() {
 
                 cigar.push_str(diff_in_query);
                 cigar.push('I');
+            }
+            if !diff_in_target.eq("0") {
+                if let Some(_reader) = &fasta_reader {
+                    // Keep the offset updated
+                    t_offset += diff_in_target.parse::<usize>().unwrap();
+                }
+
+                cigar.push_str(diff_in_target);
+                cigar.push('D');
             }
         }
     }
