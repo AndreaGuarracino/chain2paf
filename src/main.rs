@@ -80,14 +80,16 @@ fn main() {
                 .takes_value(true)
                 .short("i")
                 .long("input")
-                .help("input CHAIN file"),
+                .help("CHAIN file"),
         ).arg(
         Arg::with_name("FASTA")
             .required(false)
             .takes_value(true)
+            .multiple(true)
+            .number_of_values(2)
             .short("f")
             .long("fasta")
-            .help("input FASTA file to write =/X CIGAR operators (slower)"),
+            .help("FASTA files (uncompressed or bgzipped) for targets (1st file) and queries (2nd file). If specified, it writes =/X CIGAR operators (slower)"),
     )
         .get_matches();
 
@@ -97,11 +99,15 @@ fn main() {
     let chain_reader = BufReader::new(file);
 
     // Open the input FASTA file
-    let path_input_fasta = matches.value_of("FASTA").unwrap_or("");
-    let fasta_reader = if !path_input_fasta.is_empty() {
-        Some(faidx::Reader::from_path(path_input_fasta).unwrap())
+    let path_input_fastas: Vec<&str> = matches.values_of("FASTA").unwrap_or_default().collect();
+    let (t_fasta_reader, q_fasta_reader, write_full_cigar) = if !path_input_fastas.is_empty() {
+        (
+            Some(faidx::Reader::from_path(path_input_fastas[0]).unwrap()),
+            Some(faidx::Reader::from_path(path_input_fastas[1]).unwrap()),
+            true
+        )
     } else {
-        None
+        (None, None, false)
     };
 
     // Initialize PAF information
@@ -178,9 +184,18 @@ fn main() {
             num_matches = 0;
             cigar = String::from("");
 
-            if let Some(reader) = &fasta_reader {
+            if let (Some(target_reader), Some(query_reader)) = (&t_fasta_reader, &q_fasta_reader) {
+                t_seq = _fetch_subsequence(
+                    &target_reader,
+                    &t_name,
+                    t_start,
+                    t_end - 1,  // -1 because the end is not included in CHAIN/PAF
+                );
+                // eprintln!("Fetch target {} - {}", t_start, t_end);
+                // for x in t_seq.iter() { eprint!("{}", *x as char); }; eprintln!("");
+
                 q_seq = _fetch_subsequence(
-                    &reader,
+                    &query_reader,
                     &q_name,
                     q_start,
                     q_end - 1, // -1 because the end is not included in CHAIN/PAF
@@ -190,15 +205,6 @@ fn main() {
                 }
                 // eprintln!("Fetch query {} - {}", q_start, q_end);
                 // for x in q_seq.iter() { eprint!("{}", *x as char); }; eprintln!("");
-
-                t_seq = _fetch_subsequence(
-                    &reader,
-                    &t_name,
-                    t_start,
-                    t_end - 1,  // -1 because the end is not included in CHAIN/PAF
-                );
-                // eprintln!("Fetch target {} - {}", t_start, t_end);
-                // for x in t_seq.iter() { eprint!("{}", *x as char); }; eprintln!("");
 
                 q_offset = 0;
                 t_offset = 0;
@@ -214,7 +220,7 @@ fn main() {
             let diff_in_query = if l_vec.len() > 2 { l_vec[2] } else { "0" };
 
             if !size_ungapped_alignment.eq("0") {
-                if let Some(_reader) = &fasta_reader {
+                if write_full_cigar {
                     let mut last_op = ' ';
                     let mut len_last_op = 0;
 
@@ -274,7 +280,7 @@ fn main() {
                 }
             }
             if !diff_in_query.eq("0") {
-                if let Some(_reader) = &fasta_reader {
+                if write_full_cigar {
                     // Keep the offset updated
                     q_offset += diff_in_query.parse::<usize>().unwrap();
                 }
@@ -283,7 +289,7 @@ fn main() {
                 cigar.push('I');
             }
             if !diff_in_target.eq("0") {
-                if let Some(_reader) = &fasta_reader {
+                if write_full_cigar {
                     // Keep the offset updated
                     t_offset += diff_in_target.parse::<usize>().unwrap();
                 }
