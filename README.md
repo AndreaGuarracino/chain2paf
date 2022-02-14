@@ -32,3 +32,7 @@ If the CHAIN file is the result of a pairwise alignment, you can specify the sam
 ```shell
 chain2paf -i input.chain -f input.fa.gz input.fa.gz > input.chain.paf
 ```
+
+## info
+
+`chain2paf` performs the reverse operation of [paf2chain](https://github.com/AndreaGuarracino/paf2chain).
