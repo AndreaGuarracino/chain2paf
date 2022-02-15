@@ -75,22 +75,23 @@ fn main() {
         .author("Andrea Guarracino")
         .about("Generate a PAF format file from a CHAIN format file")
         .arg(
-            Arg::with_name("CHAIN")
+            Arg::new("CHAIN")
                 .required(true)
                 .takes_value(true)
-                .short("i")
+                .short('i')
                 .long("input")
                 .help("CHAIN file"),
-        ).arg(
-        Arg::with_name("FASTA")
-            .required(false)
-            .takes_value(true)
-            .multiple(true)
-            .number_of_values(2)
-            .short("f")
-            .long("fasta")
-            .help("FASTA files (uncompressed or bgzipped) for targets (1st file) and queries (2nd file). If specified, it writes =/X CIGAR operators (slower)"),
-    )
+        )
+        .arg(
+            Arg::new("FASTA")
+                .required(false)
+                .takes_value(true)
+                .multiple_values(true)
+                .number_of_values(2)
+                .short('f')
+                .long("fasta")
+                .help("FASTA files (uncompressed or bgzipped) for targets (1st file) and queries (2nd file). If specified, it writes =/X CIGAR operators (slower)"),
+        )
         .get_matches();
 
     // Open the input CHAIN file
