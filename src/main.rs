@@ -75,22 +75,23 @@ fn main() {
         .author("Andrea Guarracino")
         .about("Generate a PAF format file from a CHAIN format file")
         .arg(
-            Arg::with_name("CHAIN")
+            Arg::new("CHAIN")
                 .required(true)
                 .takes_value(true)
-                .short("i")
+                .short('i')
                 .long("input")
                 .help("CHAIN file"),
-        ).arg(
-        Arg::with_name("FASTA")
-            .required(false)
-            .takes_value(true)
-            .multiple(true)
-            .number_of_values(2)
-            .short("f")
-            .long("fasta")
-            .help("FASTA files (uncompressed or bgzipped) for targets (1st file) and queries (2nd file). If specified, it writes =/X CIGAR operators (slower)"),
-    )
+        )
+        .arg(
+            Arg::new("FASTA")
+                .required(false)
+                .takes_value(true)
+                .multiple_values(true)
+                .number_of_values(2)
+                .short('f')
+                .long("fasta")
+                .help("FASTA files (uncompressed or bgzipped) for targets (1st file) and queries (2nd file). If specified, it writes =/X CIGAR operators (slower)"),
+        )
         .get_matches();
 
     // Open the input CHAIN file
@@ -190,7 +191,7 @@ fn main() {
                     &t_name,
                     t_start,
                     t_end - 1,  // -1 because the end is not included in CHAIN/PAF
-                );
+                ).to_ascii_uppercase(); // To avoid mismatches like 'a' != 'A'
                 // eprintln!("Fetch target {} - {}", t_start, t_end);
                 // for x in t_seq.iter() { eprint!("{}", *x as char); }; eprintln!("");
 
@@ -199,7 +200,7 @@ fn main() {
                     &q_name,
                     q_start,
                     q_end - 1, // -1 because the end is not included in CHAIN/PAF
-                );
+                ).to_ascii_uppercase(); // To avoid mismatches like 'a' != 'A'
                 if q_strand == "-" {
                     q_seq = revcomp(q_seq);
                 }
