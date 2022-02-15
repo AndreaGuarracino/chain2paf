@@ -191,7 +191,7 @@ fn main() {
                     &t_name,
                     t_start,
                     t_end - 1,  // -1 because the end is not included in CHAIN/PAF
-                );
+                ).to_ascii_uppercase(); // To avoid mismatches like 'a' != 'A'
                 // eprintln!("Fetch target {} - {}", t_start, t_end);
                 // for x in t_seq.iter() { eprint!("{}", *x as char); }; eprintln!("");
 
@@ -200,7 +200,7 @@ fn main() {
                     &q_name,
                     q_start,
                     q_end - 1, // -1 because the end is not included in CHAIN/PAF
-                );
+                ).to_ascii_uppercase(); // To avoid mismatches like 'a' != 'A'
                 if q_strand == "-" {
                     q_seq = revcomp(q_seq);
                 }
