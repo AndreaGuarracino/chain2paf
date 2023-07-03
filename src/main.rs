@@ -137,6 +137,10 @@ fn main() {
         let l_tab = l.replace(" ", "\t"); // There are CHAIN files with space-separated fields
         let l_vec: Vec<&str> = l_tab.split('\t').collect();
 
+        if l.starts_with("#") {
+            continue;
+        }
+
         if l_vec[0].eq("chain") {
             //eprintln!("{:?}", l_vec);
 
