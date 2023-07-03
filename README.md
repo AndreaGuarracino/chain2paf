@@ -1,6 +1,9 @@
 # chain2paf
 convert CHAIN format to PAF format
 
+## citation
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8108426.svg)](https://doi.org/10.5281/zenodo.8108426)
+
 ## installation
 
 `chain2paf` is built with rust, and so we install using `cargo`:
