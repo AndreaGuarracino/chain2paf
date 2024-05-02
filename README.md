@@ -9,7 +9,7 @@ convert CHAIN format to PAF format
 `chain2paf` is built with rust, and so we install using `cargo`:
 
 ```shell
-https://github.com/AndreaGuarracino/chain2paf
+git clone https://github.com/AndreaGuarracino/chain2paf
 cd chain2paf
 cargo install --force --path .
 ```
