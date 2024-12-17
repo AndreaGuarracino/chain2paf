@@ -1,8 +1,6 @@
-extern crate clap;
-
 use std::borrow::Borrow;
 use std::cmp::max;
-use clap::{App, Arg}; //, SubCommand};
+use clap::{Command, Arg};
 
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -70,14 +68,13 @@ pub fn revcomp<C, T>(text: T) -> Vec<u8>
 }
 
 fn main() {
-    let matches = App::new("chain2paf")
+    let matches = Command::new("chain2paf")
         .version("0.1.0")
         .author("Andrea Guarracino")
         .about("Generate a PAF format file from a CHAIN format file")
         .arg(
             Arg::new("CHAIN")
                 .required(true)
-                .takes_value(true)
                 .short('i')
                 .long("input")
                 .help("CHAIN file"),
@@ -85,9 +82,7 @@ fn main() {
         .arg(
             Arg::new("FASTA")
                 .required(false)
-                .takes_value(true)
-                .multiple_values(true)
-                .number_of_values(2)
+                .num_args(2)
                 .short('f')
                 .long("fasta")
                 .help("FASTA files (uncompressed or bgzipped) for targets (1st file) and queries (2nd file). If specified, it writes =/X CIGAR operators (slower)"),
@@ -95,12 +90,16 @@ fn main() {
         .get_matches();
 
     // Open the input CHAIN file
-    let path_input_chain = matches.value_of("CHAIN").unwrap();
+    let path_input_chain = matches.get_one::<String>("CHAIN").unwrap();
     let file = File::open(path_input_chain).unwrap();
     let chain_reader = BufReader::new(file);
 
     // Open the input FASTA file
-    let path_input_fastas: Vec<&str> = matches.values_of("FASTA").unwrap_or_default().collect();
+    let path_input_fastas: Vec<&str> = matches
+        .get_many::<String>("FASTA")
+        .unwrap_or_default()
+        .map(|s| s.as_str())
+        .collect();
     let (t_fasta_reader, q_fasta_reader, write_full_cigar) = if !path_input_fastas.is_empty() {
         (
             Some(faidx::Reader::from_path(path_input_fastas[0]).unwrap()),
