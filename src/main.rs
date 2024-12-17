@@ -6,7 +6,7 @@ use clap::{App, Arg}; //, SubCommand};
 
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use rust_htslib::faidx;
+use noodles_fasta as fasta;
 
 fn _emit_paf_row(
     q_name: String, q_size: String, q_start: usize, q_end: usize, q_strand: String,
@@ -24,9 +24,24 @@ fn _emit_paf_row(
     );
 }
 
-pub fn _fetch_subsequence(reader: &faidx::Reader, name: &str, begin: usize, end: usize) -> Vec<u8> {
-    // `begin` and `end` are both 0-based (to get the 1-st nucleotide, set `begin = 0` and `end = 0`)
-    reader.fetch_seq(name, begin, end).unwrap().to_owned()
+use noodles_core::{Position, Region};
+
+pub fn _fetch_subsequence(
+    reader: &mut fasta::io::indexed_reader::IndexedReader<fasta::io::BufReader<std::fs::File>>, 
+    name: &str, 
+    begin: usize, 
+    end: usize
+) -> Vec<u8> {
+    // Convert coordinates to 1-based Position objects
+    let start = Position::try_from(begin + 1).unwrap();
+    let end = Position::try_from(end + 1).unwrap();
+    
+    // Create region directly without string parsing
+    let region = Region::new(name, start..=end);
+    
+    // Fetch and return sequence
+    let record = reader.query(&region).unwrap();
+    record.sequence().as_ref().to_vec()
 }
 
 pub fn complement(a: u8) -> u8 {
@@ -101,10 +116,14 @@ fn main() {
 
     // Open the input FASTA file
     let path_input_fastas: Vec<&str> = matches.values_of("FASTA").unwrap_or_default().collect();
-    let (t_fasta_reader, q_fasta_reader, write_full_cigar) = if !path_input_fastas.is_empty() {
+    let (mut t_fasta_reader, mut q_fasta_reader, write_full_cigar) = if !path_input_fastas.is_empty() {
         (
-            Some(faidx::Reader::from_path(path_input_fastas[0]).unwrap()),
-            Some(faidx::Reader::from_path(path_input_fastas[1]).unwrap()),
+            Some(fasta::io::indexed_reader::Builder::default()
+                .build_from_path(path_input_fastas[0])
+                .unwrap()),
+            Some(fasta::io::indexed_reader::Builder::default()
+                .build_from_path(path_input_fastas[1])
+                .unwrap()),
             true
         )
     } else {
@@ -189,9 +208,9 @@ fn main() {
             num_matches = 0;
             cigar = String::from("");
 
-            if let (Some(target_reader), Some(query_reader)) = (&t_fasta_reader, &q_fasta_reader) {
+            if let (Some(ref mut target_reader), Some(ref mut query_reader)) = (&mut t_fasta_reader, &mut q_fasta_reader) {
                 t_seq = _fetch_subsequence(
-                    &target_reader,
+                    target_reader,
                     &t_name,
                     t_start,
                     t_end - 1,  // -1 because the end is not included in CHAIN/PAF
@@ -200,7 +219,7 @@ fn main() {
                 // for x in t_seq.iter() { eprint!("{}", *x as char); }; eprintln!("");
 
                 q_seq = _fetch_subsequence(
-                    &query_reader,
+                    query_reader,
                     &q_name,
                     q_start,
                     q_end - 1, // -1 because the end is not included in CHAIN/PAF
